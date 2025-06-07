@@ -1,0 +1,20 @@
+{
+  "name": "plane-simulator",
+  "version": "1.0.0",
+  "description": "A 3D plane game where you defend a city from UFOs",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["threejs", "game", "3d", "plane", "webgl"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "three": "^0.158.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+} 
