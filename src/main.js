@@ -4,6 +4,8 @@ import { Plane } from './scripts/plane.js';
 import { City } from './scripts/city.js';
 import { FlightControls } from './scripts/controls.js';
 import { CameraController } from './scripts/camera.js';
+import { UFOManager } from './scripts/ufo.js';
+import { WeaponSystem, EffectsManager } from './scripts/weapons.js';
 
 class Game {
     constructor() {
@@ -13,9 +15,13 @@ class Game {
         this.city = new City();
         this.controls = new FlightControls();
         this.cameraController = new CameraController(this.sceneManager.camera, this.plane);
+        this.ufoManager = new UFOManager();
+        this.weaponSystem = new WeaponSystem(this.plane);
+        this.effectsManager = new EffectsManager();
         
         this.isRunning = false;
         this.clock = new THREE.Clock();
+        this.score = 0;
         
         this.init();
     }
@@ -27,6 +33,15 @@ class Game {
         // Add plane to scene
         this.sceneManager.add(this.plane.group);
         
+        // Add UFOs to scene
+        this.sceneManager.add(this.ufoManager.group);
+        
+        // Add weapon system to scene
+        this.sceneManager.add(this.weaponSystem.group);
+        
+        // Add effects manager to scene
+        this.sceneManager.add(this.effectsManager.group);
+        
         // Camera will be controlled by CameraController
         
         // Start the game loop
@@ -37,7 +52,7 @@ class Game {
             this.sceneManager.onWindowResize();
         });
         
-        console.log('🛩️  Plane Simulator initialized!');
+        console.log('🛩️  Plane Simulator initialized with UFOs and weapons!');
     }
     
     start() {
@@ -56,7 +71,13 @@ class Game {
         // Update game objects
         this.plane.update(deltaTime, this.controls);
         this.city.update(deltaTime);
+        this.ufoManager.update(deltaTime);
+        this.weaponSystem.update(deltaTime);
+        this.effectsManager.update(deltaTime);
         this.sceneManager.update(deltaTime);
+        
+        // Check collisions
+        this.handleCollisions();
         
         // Update camera
         this.cameraController.update(deltaTime, this.controls);
@@ -69,6 +90,28 @@ class Game {
         
         // Continue the loop
         requestAnimationFrame(() => this.gameLoop());
+    }
+    
+    handleCollisions() {
+        const projectiles = this.weaponSystem.getProjectiles();
+        const hits = this.ufoManager.checkCollisions(projectiles);
+        
+        hits.forEach(hit => {
+            const { ufo, projectile, position, projectileIndex } = hit;
+            
+            // Remove the projectile
+            this.weaponSystem.removeProjectile(projectileIndex);
+            
+            // Damage the UFO
+            const destroyed = ufo.takeDamage();
+            
+            if (destroyed) {
+                // Create explosion effect
+                this.effectsManager.createExplosion(position);
+                // Increase score
+                this.score += 100;
+            }
+        });
     }
     
     updateHUD() {
@@ -98,6 +141,10 @@ class Game {
         const cameraMode = this.cameraController.getCurrentMode();
         document.getElementById('camera-mode-text').textContent = 
             cameraMode.charAt(0).toUpperCase() + cameraMode.slice(1);
+        
+        // Update score and ammo
+        document.getElementById('score').textContent = this.score;
+        document.getElementById('ammo').textContent = this.weaponSystem.getAmmoCount();
     }
 }
 
